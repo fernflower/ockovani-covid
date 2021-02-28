@@ -177,9 +177,9 @@ class OckovaniLide(db.Model):
     zarizeni_nazev = Column(Unicode)
     poradi_davky = Column(Integer, primary_key=True)
     vekova_skupina = Column(Unicode, primary_key=True)
-    pocet_lidi = Column(Integer)
+    pocet = Column(Integer)
 
     def __repr__(self):
-        return "<OckovaniLide(zarizeni_nazev='%s', vakcina='%s', datum='%s', vekova_skupina=%s, pocet_lidi=%s)>" % (
+        return "<OckovaniLide(zarizeni_nazev='%s', vakcina='%s', datum='%s', vekova_skupina=%s, pocet=%s)>" % (
             self.zarizeni_nazev, self.vakcina, self.datum, self.vekova_skupina,
-            self.pocet_lidi)
+            self.pocet)

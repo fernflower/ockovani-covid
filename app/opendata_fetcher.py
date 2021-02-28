@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 
 from app import db, app
-from app.models import OckovaciMisto, OckovaniSpotreba, OckovaniDistribuce
+from app.models import OckovaciMisto, OckovaniSpotreba, OckovaniDistribuce, OckovaniLide
 
 
 class OpenDataFetcher:
@@ -157,15 +157,37 @@ class OpenDataFetcher:
         https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovaci-mista.csv
         @return:
         """
-        data_df = pd.read_csv(self.DISTRIBUTED_API)
-        agg_df = \
-        data_df.groupby(['datum ', 'vakcina', 'kraj_nuts_kod', 'kraj_nazev ', 'zarizeni_kod ', 'zarizeni_nazev',
-                         'poradi_davky', 'vekova_skupina'])[
-            'datum ', 'vakcina', 'kraj_nuts_kod', 'kraj_nazev ', 'zarizeni_kod ', 'zarizeni_nazev', 'poradi_davky', 'vekova_skupina'].count()
+        data_df = pd.read_csv(self.VACCINATED_API)
+        agg_df = data_df.groupby(["datum", "vakcina", "kraj_nuts_kod", "kraj_nazev", "zarizeni_kod", "zarizeni_nazev",
+                                  "poradi_davky", "vekova_skupina"]).size().reset_index(name='counts')
+        db.session.query(OckovaniLide).delete()
 
-        db.session.query(OckovaniDistribuce).delete()
+        for record in agg_df.itertuples(index=True, name='Pandas'):
+            datum = record.datum
+            vakcina = record.vakcina
+            kraj_nuts_kod = record.kraj_nuts_kod
+            kraj_nazev = record.kraj_nazev
+            zarizeni_kod = record.zarizeni_kod
+            zarizeni_nazev = record.zarizeni_nazev
+            poradi_davky = record.poradi_davky
+            vekova_skupina = record.vekova_skupina
+            counts = record.counts
 
-        # for record in data:
+            db.session.add(OckovaniLide(
+                datum=datum,
+                vakcina=vakcina,
+                kraj_nuts_kod=kraj_nuts_kod,
+                kraj_nazev=kraj_nazev,
+                zarizeni_kod=zarizeni_kod,
+                zarizeni_nazev=zarizeni_nazev,
+                poradi_davky=poradi_davky,
+                vekova_skupina=vekova_skupina,
+                pocet=counts
+            ))
+
+        db.session.commit()
+
+        app.logger.info('Fetching vaccinated persons finished.')
 
 
 if __name__ == '__main__':
