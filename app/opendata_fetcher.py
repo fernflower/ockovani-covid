@@ -1,6 +1,7 @@
 import sys
 
 import requests
+import pandas as pd
 
 from app import db, app
 from app.models import OckovaciMisto, OckovaniSpotreba, OckovaniDistribuce
@@ -10,6 +11,7 @@ class OpenDataFetcher:
     CENTERS_API = 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/prehled-ockovacich-mist.json'
     USED_API = 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovani-spotreba.json'
     DISTRIBUTED_API = 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovani-distribuce.json'
+    VACCINATED_API = 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovaci-mista.csv'
 
     def fetch_all(self):
         self.fetch_centers()
@@ -149,6 +151,22 @@ class OpenDataFetcher:
 
         app.logger.info('Fetching distributed vaccines finished.')
 
+    def fetch_vaccinated(self):
+        """
+        Fetch vaccinated files from opendata.
+        https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/ockovaci-mista.csv
+        @return:
+        """
+        data_df = pd.read_csv(self.DISTRIBUTED_API)
+        agg_df = \
+        data_df.groupby(['datum ', 'vakcina', 'kraj_nuts_kod', 'kraj_nazev ', 'zarizeni_kod ', 'zarizeni_nazev',
+                         'poradi_davky', 'vekova_skupina'])[
+            'datum ', 'vakcina', 'kraj_nuts_kod', 'kraj_nazev ', 'zarizeni_kod ', 'zarizeni_nazev', 'poradi_davky', 'vekova_skupina'].count()
+
+        db.session.query(OckovaniDistribuce).delete()
+
+        # for record in data:
+
 
 if __name__ == '__main__':
     arguments = sys.argv[1:]
@@ -166,6 +184,8 @@ if __name__ == '__main__':
         fetcher.fetch_used()
     elif argument == 'distributed':
         fetcher.fetch_distributed()
+    elif argument == 'vaccinated':
+        fetcher.fetch_vaccinated()
     else:
         print('Invalid option.')
         exit(1)
