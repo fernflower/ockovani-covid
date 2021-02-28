@@ -96,7 +96,7 @@ def info_misto(misto_id):
              " order by vyrobce, operace")).params(misto_id=misto_id).all()
     tot = compute_vaccination_stats(ampule_info)
 
-    return render_template('misto.html', data=nactene_informace, misto=ockovani_info, ampule=ampule_info, total=tot,
+    return render_template('misto.html', data=nactene_informace, misto=misto, ampule=ampule_info, total=tot,
                            last_update=last_update())
 
 
