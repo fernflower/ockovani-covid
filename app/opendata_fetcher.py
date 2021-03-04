@@ -180,7 +180,7 @@ class OpenDataFetcher:
 
         db.session.query(OckovaniLide).delete()
 
-        for row in d.itertuples(index=False):
+        for row in d.itertuples(index=False, name=None):
             db.session.add(OckovaniLide(
                 datum=row[0],
                 vakcina=row[1],
@@ -192,7 +192,6 @@ class OpenDataFetcher:
                 vekova_skupina=row[7],
                 pocet=row[8]
             ))
-
         app.logger.info('Fetching vaccinated people finished.')
 
     def _fetch_registrations(self):
@@ -212,9 +211,10 @@ class OpenDataFetcher:
             .size() \
             .reset_index(name='counts')
 
+        all_places = {p.id: p for p in db.session.query(OckovaciMisto).all()}
         for row in df.itertuples(index=False):
             misto_id = row[1]
-            misto = db.session.query(OckovaciMisto).filter(OckovaciMisto.id == misto_id).one_or_none()
+            misto = all_places.get(misto_id)
 
             if misto is None:
                 app.logger.warn("Center: '%s' doesn't exist" % (misto_id))
@@ -244,9 +244,11 @@ class OpenDataFetcher:
 
         d = data.drop(["ockovaci_misto_nazev", "kraj_nuts_kod", "kraj_nazev"], axis=1)
 
-        for row in d.itertuples(index=False):
+        all_places = {p.id: p for p in db.session.query(OckovaciMisto).all()}
+
+        for row in d.itertuples(index=False, name=None):
             misto_id = row[1]
-            misto = db.session.query(OckovaciMisto).filter(OckovaciMisto.id == misto_id).one_or_none()
+            misto = all_places.get(misto_id)
 
             if misto is None:
                 app.logger.warn("Center: '%s' doesn't exist" % (misto_id))
